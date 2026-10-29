@@ -7,11 +7,8 @@ try:
 except ImportError:
     raise SystemExit("Требуется Flask. Выполните:  pip install flask")
 
-# ===================== НАСТРОЙКИ =====================
 TELEGRAM_USERNAME = os.environ.get("TELEGRAM_USERNAME", "your_username")
 PORT = int(os.environ.get("PORT", 5000))
-# ========================================================
-
 
 TELEGRAM_USERNAME = TELEGRAM_USERNAME.strip().lstrip("@") or "your_username"
 ANSWERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -29,12 +26,14 @@ PAGE = r"""<!DOCTYPE html>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💌</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Nunito:ital,wght@0,400;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:ital,wght@0,400;0,700;0,800;1,400&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --mint:#B2F2D8; --mint-2:#DFFAEF; --navy:#121A3A;
-  --navy-70:rgba(18,26,58,.7); --coral:#FF8FAB; --bsod:#0078D7;
+  --navy-70:rgba(18,26,58,.7); --coral:#FF8FAB;
+  --game-bg:#0a0a0a; --game-green:#39FF14; --game-pink:#FF1493;
+  --game-cyan:#00FFFF; --game-purple:#9D4EDD;
 }
 html{scroll-behavior:smooth}
 body{
@@ -43,7 +42,6 @@ body{
 }
 body.locked{overflow:hidden}
 
-/* ---------- анимированный фон ---------- */
 #sky{
   position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
   background:
@@ -62,13 +60,13 @@ body.locked{overflow:hidden}
   100%{transform:translate(var(--drift),-120vh) rotate(26deg);opacity:0}
 }
 
-/* ---------- экраны ---------- */
+
 .screen{min-height:100vh;display:none;align-items:center;justify-content:center;
   padding:40px 20px;position:relative;z-index:1}
 .screen.active{display:flex;animation:screen-in .55s cubic-bezier(.2,.9,.25,1.15) both}
 @keyframes screen-in{from{opacity:0;transform:translateY(28px) scale(.985)}to{opacity:1;transform:none}}
 
-/* ---------- приглашение ---------- */
+
 .invite{text-align:center;max-width:840px}
 .kitty-wrap{position:relative;display:inline-block;animation:bob 3.4s ease-in-out infinite}
 .kitty-wrap svg{width:clamp(168px,32vw,248px);height:auto;display:block;
@@ -81,8 +79,8 @@ body.locked{overflow:hidden}
 .t2{animation-delay:.9s}.t3{animation-delay:1.7s}
 @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.1)}}
 
-h1{font-family:'Shrikhand',cursive;font-weight:400;font-size:clamp(2.1rem,5.8vw,4.3rem);
-  line-height:1.1;margin:26px 0 8px;text-wrap:balance}
+h1{font-family:'Pacifico',cursive;font-weight:400;font-size:clamp(2.1rem,5.8vw,4.2rem);
+  line-height:1.15;margin:26px 0 8px;text-wrap:balance}
 h1 span{text-decoration:underline wavy var(--coral);
   text-decoration-thickness:5px;text-underline-offset:9px}
 .sub{font-style:italic;color:var(--navy-70);font-size:1.06rem}
@@ -105,12 +103,12 @@ h1 span{text-decoration:underline wavy var(--coral);
   25%{transform:scale(var(--shrink,1)) rotate(-5deg)}
   75%{transform:scale(var(--shrink,1)) rotate(5deg)}}
 
-/* вылетающие сердечки */
+
 .pop-heart{position:fixed;z-index:60;pointer-events:none;font-size:22px;
   transform:translate(-50%,-50%);animation:popfly .9s cubic-bezier(.2,.7,.3,1) forwards}
 @keyframes popfly{to{transform:translate(calc(var(--dx) - 50%),calc(var(--dy) - 50%)) scale(.4) rotate(30deg);opacity:0}}
 
-/* ---------- окно планирования (оверлей) ---------- */
+
 #screen-plan{display:none;position:fixed;inset:0;z-index:20;overflow:auto;padding:28px 16px;
   background:rgba(18,26,58,.45);backdrop-filter:blur(4px)}
 #screen-plan.open{display:flex}
@@ -128,8 +126,8 @@ h1 span{text-decoration:underline wavy var(--coral);
   width:30px;height:30px;border-radius:8px;line-height:1;transition:.15s}
 .window-close:hover{background:rgba(255,255,255,.18);transform:rotate(90deg)}
 .window-body{padding:26px clamp(18px,4vw,38px) 34px}
-.window-body h2{font-family:'Shrikhand',cursive;font-weight:400;
-  font-size:clamp(1.5rem,3.4vw,2.15rem);line-height:1.2;margin-bottom:4px}
+.window-body h2{font-family:'Pacifico',cursive;font-weight:400;
+  font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.25;margin-bottom:4px}
 .window-sub{color:var(--navy-70);font-style:italic;margin-bottom:6px}
 
 .field-label{display:block;font-weight:800;margin:20px 0 8px;font-size:1.03rem}
@@ -186,33 +184,262 @@ input[type=text]:focus{outline:none;box-shadow:0 0 0 4px rgba(18,26,58,.18)}
   border-radius:22px;padding:52px clamp(26px,5vw,64px);box-shadow:14px 14px 0 rgba(18,26,58,.18)}
 .big-heart{font-size:4.2rem;animation:heartbeat 1.3s ease-in-out infinite;display:inline-block}
 @keyframes heartbeat{0%,100%{transform:scale(1)}12%{transform:scale(1.2)}24%{transform:scale(1)}36%{transform:scale(1.12)}}
-.done-card h2{font-family:'Shrikhand',cursive;font-weight:400;font-size:clamp(2rem,5vw,3rem);margin:10px 0 12px}
+.done-card h2{font-family:'Pacifico',cursive;font-weight:400;font-size:clamp(2rem,5vw,3rem);margin:10px 0 12px}
 .done-card .details{font-weight:800;font-size:1.12rem;background:rgba(255,255,255,.7);
   border-radius:12px;padding:12px 18px;display:inline-block;margin-bottom:6px}
 .done-card .btn{margin-top:26px}
 
-/* ---------- СИНИЙ ЭКРАН СМЕРТИ ---------- */
-#bsod{position:fixed;inset:0;z-index:100;background:var(--bsod);color:#fff;display:none;
-  align-items:center;font-family:"Segoe UI",system-ui,sans-serif}
-#bsod.show{display:flex;animation:bsod-flicker .4s steps(1,end)}
-@keyframes bsod-flicker{0%{opacity:0}25%{opacity:1}40%{opacity:.15}55%{opacity:1}70%{opacity:.35}100%{opacity:1}}
-.bsod-inner{width:min(780px,90vw);margin:0 auto;padding:44px 22px;
-  font-size:clamp(15px,1.9vw,21px);line-height:1.6}
-.bsod .sad{font-size:clamp(90px,16vw,158px);font-weight:200;line-height:1;margin-bottom:26px}
-.bsod .pct{margin:30px 0 34px}
-.bsod .fix p{margin:12px 0}
-.bsod kbd{display:inline-block;padding:2px 10px;border:2px solid rgba(255,255,255,.9);
-  border-radius:6px;font-family:inherit;font-weight:700;box-shadow:0 2px 0 rgba(255,255,255,.55)}
-.bsod a{color:#fff;font-weight:700;text-underline-offset:3px}
-.bsod a:hover{background:rgba(255,255,255,.22)}
-.stoprow{display:flex;align-items:center;gap:22px;margin-top:46px}
-.stoprow svg{flex:none;opacity:.95}
-.stop{font-size:.85em;opacity:.92;line-height:1.5}
-body.bsod-mode{overflow:hidden}
+/* ==================== ЭКРАН GAME OVER ==================== */
+#game-over{
+  position:fixed; inset:0; z-index:100;
+  background:var(--game-bg);
+  display:none; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+#game-over.show{
+  display:flex;
+  animation:go-flicker .6s steps(1,end);
+}
+@keyframes go-flicker{
+  0%{opacity:0}
+  15%{opacity:1}
+  25%{opacity:.1}
+  35%{opacity:1}
+  45%{opacity:.2}
+  55%{opacity:1}
+  70%{opacity:.3}
+  85%{opacity:1}
+  100%{opacity:1}
+}
+
+/* Пиксельная сетка как в старых мониторах */
+#game-over::before{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,255,20,.03) 2px,
+      rgba(0,255,20,.03) 4px
+    );
+  pointer-events:none;
+  z-index:2;
+}
+
+/* Сканирующая линия */
+#game-over::after{
+  content:"";
+  position:absolute; inset:0;
+  background:linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(57,255,20,.08) 50%,
+    transparent 100%
+  );
+  background-size:100% 8px;
+  animation:scanline 3s linear infinite;
+  pointer-events:none;
+  z-index:3;
+}
+@keyframes scanline{
+  0%{background-position:0 -100vh}
+  100%{background-position:0 100vh}
+}
+
+.go-inner{
+  position:relative; z-index:5;
+  width:min(720px,92vw);
+  text-align:center;
+  padding:40px 20px;
+}
+
+/* Разбитое сердечко */
+.go-heart{
+  font-size:clamp(50px,10vw,80px);
+  margin-bottom:20px;
+  animation:heart-crack 2s ease-in-out infinite;
+  display:inline-block;
+  filter:drop-shadow(0 0 20px rgba(255,20,147,.6));
+}
+@keyframes heart-crack{
+  0%,100%{transform:scale(1) rotate(0deg)}
+  10%{transform:scale(1.1) rotate(-3deg)}
+  20%{transform:scale(1) rotate(3deg)}
+  30%{transform:scale(1.05) rotate(-2deg)}
+  40%{transform:scale(1) rotate(0deg)}
+}
+
+/* GAME OVER текст */
+.go-title{
+  font-family:'Press Start 2P',cursive;
+  font-size:clamp(1.8rem,6vw,3.5rem);
+  color:var(--game-green);
+  text-shadow:
+    0 0 10px var(--game-green),
+    0 0 20px var(--game-green),
+    0 0 40px var(--game-green),
+    3px 3px 0 rgba(255,20,147,.8);
+  letter-spacing:4px;
+  animation:go-blink 1.2s ease-in-out infinite;
+  margin-bottom:10px;
+}
+@keyframes go-blink{
+  0%,100%{opacity:1}
+  50%{opacity:.6}
+}
+
+.go-subtitle{
+  font-family:'Press Start 2P',cursive;
+  font-size:clamp(.7rem,2vw,1rem);
+  color:var(--game-pink);
+  text-shadow:0 0 10px var(--game-pink);
+  margin-bottom:35px;
+  line-height:1.8;
+}
+
+/* Полоса загрузки (прогресс) */
+.go-progress-wrap{
+  width:100%;
+  max-width:400px;
+  margin:0 auto 15px;
+  background:rgba(255,255,255,.1);
+  border:2px solid var(--game-green);
+  border-radius:4px;
+  padding:4px;
+  box-shadow:0 0 15px rgba(57,255,20,.3);
+}
+.go-progress-bar{
+  height:22px;
+  width:0%;
+  background:linear-gradient(90deg, var(--game-green), var(--game-cyan));
+  border-radius:2px;
+  transition:width .4s ease;
+  box-shadow:0 0 10px var(--game-green);
+  position:relative;
+  overflow:hidden;
+}
+.go-progress-bar::after{
+  content:"";
+  position:absolute; inset:0;
+  background:repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 8px,
+    rgba(0,0,0,.2) 8px,
+    rgba(0,0,0,.2) 16px
+  );
+}
+
+.go-pct{
+  font-family:'Press Start 2P',cursive;
+  font-size:clamp(.8rem,2vw,1.1rem);
+  color:var(--game-cyan);
+  text-shadow:0 0 8px var(--game-cyan);
+  margin-bottom:35px;
+}
+
+.go-messages{
+  text-align:left;
+  display:inline-block;
+  margin-bottom:35px;
+}
+.go-messages p{
+  font-family:'Press Start 2P',cursive;
+  font-size:clamp(.6rem,1.8vw,.85rem);
+  color:#ccc;
+  line-height:2.2;
+  margin-bottom:8px;
+  text-shadow:1px 1px 2px rgba(0,0,0,.8);
+}
+.go-messages .highlight{
+  color:var(--game-cyan);
+}
+.go-messages .pink{
+  color:var(--game-pink);
+}
+
+.go-messages a{
+  color:var(--game-green);
+  text-decoration:none;
+  border-bottom:2px dashed var(--game-green);
+  transition:.2s;
+  text-shadow:0 0 8px var(--game-green);
+}
+.go-messages a:hover{
+  color:#fff;
+  border-bottom-color:#fff;
+  text-shadow:0 0 15px var(--game-green), 0 0 25px var(--game-green);
+}
+
+kbd{
+  display:inline-block;
+  padding:3px 8px;
+  border:2px solid var(--game-cyan);
+  border-radius:4px;
+  font-family:'Press Start 2P',cursive;
+  font-size:.7em;
+  color:var(--game-cyan);
+  background:rgba(0,255,255,.1);
+  box-shadow:0 0 8px rgba(0,255,255,.3), inset 0 2px 0 rgba(255,255,255,.2);
+  margin:0 2px;
+}
+
+.go-restart{
+  display:inline-block;
+  font-family:'Press Start 2P',cursive;
+  font-size:clamp(.65rem,1.8vw,.9rem);
+  color:var(--game-bg);
+  background:var(--game-green);
+  border:none;
+  padding:14px 30px;
+  cursor:pointer;
+  border-radius:4px;
+  box-shadow:0 0 20px rgba(57,255,20,.5), 0 4px 0 #1a8a0a;
+  transition:.15s;
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+.go-restart:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 30px rgba(57,255,20,.8), 0 6px 0 #1a8a0a;
+}
+.go-restart:active{
+  transform:translateY(2px);
+  box-shadow:0 0 15px rgba(57,255,20,.4), 0 2px 0 #1a8a0a;
+}
+
+/* Декоративные пиксели */
+.go-pixel{
+  position:absolute;
+  width:8px; height:8px;
+  background:var(--game-green);
+  opacity:.4;
+  animation:pixel-float 4s ease-in-out infinite;
+}
+@keyframes pixel-float{
+  0%,100%{transform:translateY(0) rotate(0deg);opacity:.4}
+  50%{transform:translateY(-30px) rotate(180deg);opacity:.8}
+}
+
+/* Статусная строка внизу */
+.go-status{
+  position:absolute;
+  bottom:20px; left:0; right:0;
+  font-family:'Press Start 2P',cursive;
+  font-size:clamp(.5rem,1.5vw,.7rem);
+  color:rgba(57,255,20,.5);
+  text-align:center;
+  letter-spacing:2px;
+}
+
+body.game-mode{overflow:hidden}
 
 @media (max-width:680px){
   .picker{grid-template-columns:1fr}
   .btn{padding:15px 34px}
+  .go-messages p{font-size:clamp(.55rem,2.5vw,.75rem)}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
@@ -222,7 +449,6 @@ body.bsod-mode{overflow:hidden}
 <body>
 <div id="sky" aria-hidden="true"></div>
 
-<!-- ================= ЭКРАН 1 : ВОПРОС ================= -->
 <main id="screen-invite" class="screen active">
   <div class="invite">
     <div class="kitty-wrap">
@@ -268,7 +494,6 @@ body.bsod-mode{overflow:hidden}
   <p class="invite-foot">100% без риска · 0% шансов пожалеть</p>
 </main>
 
-<!-- ================= ЭКРАН 2 : ОКНО ПЛАНИРОВАНИЯ ================= -->
 <section id="screen-plan" aria-label="Планирование свидания">
   <div class="window">
     <header class="window-bar">
@@ -313,7 +538,6 @@ body.bsod-mode{overflow:hidden}
   </div>
 </section>
 
-<!-- ================= ЭКРАН 3 : ДОГОВОРИЛИСЬ ================= -->
 <section id="screen-done" class="screen">
   <div class="done-card">
     <span class="big-heart">💖</span>
@@ -324,31 +548,44 @@ body.bsod-mode{overflow:hidden}
   </div>
 </section>
 
-<!-- ================= СИНИЙ ЭКРАН СМЕРТИ ================= -->
-<div id="bsod" role="alertdialog" aria-label="Ошибка">
-  <div class="bsod-inner">
-    <div class="sad">:(</div>
-    <p>На вашем ПК возникла проблема, и его необходимо перезагрузить. Мы собираем данные об ошибке, а затем выполним перезагрузку.</p>
-    <p class="pct"><span id="bsod-pct">0</span>% выполнено</p>
-    <div class="fix">
-      <p>Просто нажми <kbd>F5</kbd> или <kbd>Ctrl</kbd> + <kbd>R</kbd>, и всё будет хорошо.</p>
-      <p>Напиши мне в Telegram — <a href="https://t.me/__TELEGRAM_USERNAME__" target="_blank" rel="noopener">@__TELEGRAM_USERNAME__</a></p>
+<div id="game-over" role="alertdialog" aria-label="Game Over">
+  <!-- Декоративные пиксели -->
+  <div class="go-pixel" style="top:10%;left:8%;animation-delay:0s"></div>
+  <div class="go-pixel" style="top:20%;left:85%;animation-delay:.5s;background:var(--game-pink)"></div>
+  <div class="go-pixel" style="top:60%;left:12%;animation-delay:1s;background:var(--game-cyan)"></div>
+  <div class="go-pixel" style="top:75%;left:88%;animation-delay:1.5s"></div>
+  <div class="go-pixel" style="top:40%;left:5%;animation-delay:2s;background:var(--game-purple)"></div>
+  <div class="go-pixel" style="top:85%;left:50%;animation-delay:2.5s;background:var(--game-pink)"></div>
+  <div class="go-pixel" style="top:15%;left:55%;animation-delay:3s;background:var(--game-cyan)"></div>
+  <div class="go-pixel" style="top:50%;left:92%;animation-delay:3.5s;background:var(--game-purple)"></div>
+
+  <div class="go-inner">
+    <div class="go-heart">💔</div>
+
+    <div class="go-title">GAME OVER</div>
+    <div class="go-subtitle">Сердце получило критический урон.<br>Продолжить невозможно...</div>
+
+    <div class="go-progress-wrap">
+      <div class="go-progress-bar" id="go-bar"></div>
     </div>
-    <div class="stoprow">
-      <svg width="66" height="58" viewBox="0 0 56 48" fill="#fff" aria-hidden="true">
-        <rect x="8" y="0" width="8" height="8"/><rect x="16" y="0" width="8" height="8"/>
-        <rect x="32" y="0" width="8" height="8"/><rect x="40" y="0" width="8" height="8"/>
-        <rect x="0" y="8" width="56" height="16"/>
-        <rect x="8" y="24" width="40" height="8"/>
-        <rect x="16" y="32" width="24" height="8"/>
-        <rect x="24" y="40" width="8" height="8"/>
-      </svg>
-      <p class="stop">Код остановки: DATE_DECLINED_EXCEPTION<br>Что сломалось: HEART.SYS</p>
+    <div class="go-pct"><span id="go-pct">0</span>% ЗАГРУЗКА...</div>
+
+    <div class="go-messages">
+      <p class="highlight">▶ Нажми <kbd>F5</kbd> или <kbd>Ctrl</kbd>+<kbd>R</kbd>, чтобы вернуться и исправить ошибку.</p>
+      <p class="pink">▶ Напиши мне в Telegram — <a href="https://t.me/__TELEGRAM_USERNAME__" target="_blank" rel="noopener">@__TELEGRAM_USERNAME__</a>, и мы всё починим!</p>
     </div>
+
+    <button class="go-restart" id="go-restart" type="button">⟳ Начать заново</button>
   </div>
+
+  <div class="go-status">HEART.SYS — CRITICAL FAILURE — ERROR CODE: LOVE_NOT_FOUND</div>
 </div>
 
-<noscript><p style="position:fixed;inset:0;display:grid;place-items:center;background:#B2F2D8;font-weight:800">Пожалуйста, включите JavaScript, чтобы открыть это приглашение 💌</p></noscript>
+<noscript>
+  <p style="position:fixed;inset:0;display:grid;place-items:center;background:#B2F2D8;font-weight:800">
+    Пожалуйста, включите JavaScript, чтобы открыть это приглашение 💌
+  </p>
+</noscript>
 
 <script>
 (function(){
@@ -359,7 +596,6 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){
 var MONTHS=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
 var today=new Date(); today.setHours(0,0,0,0);
 
-/* ----- парящие сердечки и искорки ----- */
 (function(){
   var sky=$("sky"), glyphs=["♥","♥","♡","✦"],
       colors=["rgba(18,26,58,.45)","rgba(255,143,171,.85)","rgba(255,255,255,.9)","rgba(18,26,58,.3)"];
@@ -379,7 +615,6 @@ var today=new Date(); today.setHours(0,0,0,0);
   }
 })();
 
-/* ----- экраны ----- */
 var screens={invite:$("screen-invite"),done:$("screen-done")};
 function show(name){
   var plan=$("screen-plan");
@@ -403,7 +638,6 @@ function burst(x,y,n){
   }
 }
 
-/* ----- Да / Нет ----- */
 var yes=$("btn-yes"), no=$("btn-no");
 var noLabels=["нет?","ты уверена?","серьезно??","подумай еще раз 🥺","последний шанс!"];
 var dodge=0;
@@ -413,7 +647,7 @@ no.addEventListener("mouseenter",function(){
   no.style.setProperty("--shrink",Math.max(0.72,1-dodge*0.055).toFixed(3));
   yes.style.setProperty("--grow",Math.min(1.18,1+dodge*0.035).toFixed(3));
 });
-no.addEventListener("click",bsod);
+no.addEventListener("click",triggerGameOver);
 yes.addEventListener("click",function(){
   var r=yes.getBoundingClientRect();
   burst(r.left+r.width/2,r.top+r.height/2,16);
@@ -422,10 +656,9 @@ yes.addEventListener("click",function(){
 $("plan-close").addEventListener("click",function(){show("invite");});
 $("btn-again").addEventListener("click",function(){show("invite");});
 document.addEventListener("keydown",function(e){
-  if(e.key==="Escape" && !bsodStarted) show("invite");
+  if(e.key==="Escape" && !gameOverStarted) show("invite");
 });
 
-/* ----- состояние ----- */
 var state={place:"",date:null,time:null};
 var placeInput=$("place");
 placeInput.addEventListener("input",function(){state.place=placeInput.value;validate();});
@@ -437,7 +670,6 @@ Array.prototype.forEach.call(document.querySelectorAll("#chips button"),function
   });
 });
 
-/* ----- календарь ----- */
 var view=new Date(today.getFullYear(),today.getMonth(),1);
 var minMonth=new Date(today.getFullYear(),today.getMonth(),1);
 var maxMonth=new Date(today.getFullYear(),today.getMonth()+11,1);
@@ -470,7 +702,6 @@ function renderCal(){
 $("cal-prev").addEventListener("click",function(){view.setMonth(view.getMonth()-1);renderCal();});
 $("cal-next").addEventListener("click",function(){view.setMonth(view.getMonth()+1);renderCal();});
 
-/* ----- слоты времени: 09:00 → 22:00, каждые 30 минут ----- */
 function buildTimes(){
   var g=$("time-grid"); g.innerHTML="";
   var isToday=sameDay(state.date,today);
@@ -504,7 +735,7 @@ function validate(){
   $("summary").innerHTML="📍 "+p+' <span class="sep">·</span> 🗓 '+t;
 }
 
-/* ----- подтверждение ----- */
+
 $("btn-confirm").addEventListener("click",function(){
   var btn=$("btn-confirm");
   btn.disabled=true; btn.textContent="договариваемся… 💌";
@@ -519,20 +750,36 @@ $("btn-confirm").addEventListener("click",function(){
     .then(finish,finish);
 });
 
-/* ----- СИНИЙ ЭКРАН ----- */
-var bsodStarted=false;
-function bsod(){
-  if(bsodStarted) return; bsodStarted=true;
-  document.body.classList.add("bsod-mode");
-  $("bsod").classList.add("show");
-  document.title=":(";
+var gameOverStarted=false;
+function triggerGameOver(){
+  if(gameOverStarted) return;
+  gameOverStarted=true;
+  document.body.classList.add("game-mode");
+  $("game-over").classList.add("show");
+  document.title="💔 GAME OVER";
+
   var p=0;
+  var bar=$("go-bar");
+  var pctEl=$("go-pct");
+
   var t=setInterval(function(){
-    if(Math.random()>0.18) p=Math.min(100,p+1+Math.floor(Math.random()*6));
-    $("bsod-pct").textContent=p;
-    if(p>=100) clearInterval(t);
-  },550);
+    if(Math.random()>0.15){
+      p=Math.min(100,p+1+Math.floor(Math.random()*5));
+      pctEl.textContent=p;
+      bar.style.width=p+"%";
+    }
+    if(p>=100){
+      clearInterval(t);
+      pctEl.textContent=100;
+      bar.style.width="100%";
+    }
+  },500);
 }
+
+/* Кнопка "Начать заново" — перезагружает страницу */
+$("go-restart").addEventListener("click",function(){
+  location.reload();
+});
 
 /* инициализация */
 renderCal(); buildTimes(); validate();
